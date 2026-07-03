@@ -34,6 +34,7 @@ def run_health_server():
 async def download_media(url: str, output_path: str) -> str:
     if "instagram.com" in url:
         url = url.replace("/reel/", "/p/")
+
     ydl_opts: dict[str, any] = {
         "format": "bestvideo+bestaudio/best",
         "outtmpl": output_path,
@@ -41,6 +42,11 @@ async def download_media(url: str, output_path: str) -> str:
         "no_warnings": True,
         "extractor_args": {"instagram": {"embed": True}},
     }
+
+    # Pass the temporary file path to yt-dlp if it exists
+    if os.path.exists("cookies.txt"):
+        ydl_opts["cookiefile"] = "cookies.txt"
+
     loop = asyncio.get_event_loop()
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
         await loop.run_in_executor(None, lambda: ydl.download([url]))
@@ -86,6 +92,16 @@ def main():
     TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
     if not TOKEN:
         raise ValueError("Error: TELEGRAM_BOT_TOKEN environment variable not set!")
+
+    # --- ADD THIS: Extract cookies from Render environment variable ---
+    cookies_content = os.environ.get("COOKIES_CONTENT")
+    if cookies_content:
+        with open("cookies.txt", "w") as f:
+            f.write(cookies_content)
+        print("Successfully created cookies.txt from environment variable.")
+    else:
+        print("Warning: COOKIES_CONTENT environment variable is empty.")
+    # -----------------------------------------------------------------
 
     # Start the web server in a separate thread so it doesn't block the bot
     threading.Thread(target=run_health_server, daemon=True).start()
