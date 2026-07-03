@@ -19,6 +19,12 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"Bot is alive and running 24/7!")
 
+    # ADD THIS TO FIX UPTIME ROBOT:
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+
 
 def run_health_server():
     # Render assigns a temporary dynamic port to the 'PORT' environment variable
@@ -82,7 +88,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await status_msg.edit_text("❌ Failed to process this video.")
         except Exception as e:
             print(f"Error: {e}")
-            await status_msg.edit_text("⚠️ Could not download video.")
+            await status_msg.edit_text(f"⚠️ Could not download video. Error: {e}")
         finally:
             if os.path.exists(filename):
                 os.remove(filename)
